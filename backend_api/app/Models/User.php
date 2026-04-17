@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Worker;
+use App\Models\Request;
+use App\Models\Chat;
+use App\Models\Rating;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
