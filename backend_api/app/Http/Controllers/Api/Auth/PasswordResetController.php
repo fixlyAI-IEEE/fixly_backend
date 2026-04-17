@@ -24,12 +24,11 @@ class PasswordResetController extends Controller
     {
         $otp = $this->otpService->generate($request->phone);
 
-        // During development: expose OTP in response.
-        // In production: remove 'otp' from the response and send via SMS.
-        return response()->json([
-            'message' => 'OTP sent successfully.',
-            'otp'     => $otp,          // TODO: remove in production
-        ]);
+            if (!User::where('phone', $request->phone)->exists()) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], 404);
+        }
     }
 
     /**
@@ -57,8 +56,7 @@ class PasswordResetController extends Controller
         $this->otpService->consume($request->phone, $request->otp);
 
         User::where('phone', $request->phone)
-            ->update(['password' => Hash::make($request->password)]);
-
+                ->update(['password' => $request->password]);
         return response()->json([
             'message' => 'Password reset successfully. Please log in.',
         ]);

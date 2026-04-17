@@ -16,6 +16,7 @@ class Worker extends Model
         'is_available',
         'is_verified',
         'rating',
+        'working_days',
     ];
 
     protected function casts(): array
@@ -24,6 +25,7 @@ class Worker extends Model
             'is_available' => 'boolean',
             'is_verified'  => 'boolean',
             'rating'       => 'float',
+            'working_days' => 'array',
         ];
     }
 

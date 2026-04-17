@@ -43,9 +43,10 @@ class AuthService
         ]);
 
         $worker = Worker::create([
-            'user_id'     => $user->id,
-            'job_type_id' => $data['job_type_id'],
-        ]);
+        'user_id'      => $user->id,
+        'job_type_id'  => $data['job_type_id'],
+        'working_days' => $data['working_days'] ?? null, 
+    ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

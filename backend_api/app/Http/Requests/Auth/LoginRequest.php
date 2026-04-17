@@ -3,16 +3,17 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Password;
 
 class LoginRequest extends FormRequest
 {
     public function authorize(): bool { return true; }
 
-    public function rules(): array
-    {
-        return [
-            'phone'    => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ];
-    }
+   public function rules(): array
+{
+    return [
+        'phone' => ['required', 'regex:/^01[0-9]{9}$/'],
+        'password' => ['required', 'string'],
+    ];
+}
 }
