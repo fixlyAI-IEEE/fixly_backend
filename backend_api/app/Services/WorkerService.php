@@ -32,7 +32,7 @@ class WorkerService
                 ! empty($filters['areas']),
                 fn ($q) => $q->whereHas(
                     'user',
-                    fn ($u) => $u->where('areas', 'like', '%' . $filters['areas'] . '%')
+                    fn ($u) => $u->whereJsonContains('areas', $filters['areas'])
                 )
             )
             ->when(
