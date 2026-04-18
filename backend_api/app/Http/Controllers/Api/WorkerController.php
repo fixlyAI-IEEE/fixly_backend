@@ -27,15 +27,15 @@ class WorkerController extends Controller
     {
         $workers = $this->workerService->listing($request->validated());
 
-        return response()->json([
-            'data' => WorkerResource::collection($workers),
-            'meta' => [
-                'current_page' => $workers->currentPage(),
-                'last_page'    => $workers->lastPage(),
-                'per_page'     => $workers->perPage(),
-                'total'        => $workers->total(),
-            ],
-        ]);
+       return response()->json([
+        'data' => WorkerResource::collection($workers->items()),
+        'meta' => [
+            'current_page' => $workers->currentPage(),
+            'last_page'    => $workers->lastPage(),
+            'per_page'     => $workers->perPage(),
+            'total'        => $workers->total(),
+        ],
+    ]);
     }
 
     /**
