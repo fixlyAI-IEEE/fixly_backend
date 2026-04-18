@@ -10,32 +10,25 @@ use App\Models\User;
 use App\Services\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
-
+use App\Services\SmsService;
 class PasswordResetController extends Controller
 {
     public function __construct(private readonly OtpService $otpService) {}
 
-    /**
-     * POST /api/auth/password/send-otp
-     *
-     * Step 1 — generate OTP and (later) send via SMS.
-     */
-    public function sendOtp(SendOtpRequest $request): JsonResponse
-    {
-        $otp = $this->otpService->generate($request->phone);
+  public function sendOtp(SendOtpRequest $request): JsonResponse
+{
+    $otp = $this->otpService->generate($request->phone);
 
-            if (!User::where('phone', $request->phone)->exists()) {
-            return response()->json([
-                'message' => 'User not found.'
-            ], 404);
-        }
-    }
+    app(SmsService::class)->send(
+        $request->phone,
+        "Your OTP code is: $otp"
+    );
 
-    /**
-     * POST /api/auth/password/verify-otp
-     *
-     * Step 2 — verify the OTP is correct and not expired.
-     */
+    return response()->json([
+        'message' => 'OTP sent successfully.',
+    ]);
+}
+
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
     {
         $this->otpService->verify($request->phone, $request->otp);
@@ -45,18 +38,13 @@ class PasswordResetController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/auth/password/reset
-     *
-     * Step 3 — consume the verified OTP and set new password.
-     */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        // Will throw ValidationException if OTP is invalid / not verified
-        $this->otpService->consume($request->phone, $request->otp);
+        $this->otpService->consume($request->phone);
 
         User::where('phone', $request->phone)
-                ->update(['password' => $request->password]);
+            ->update(['password' => Hash::make($request->password)]);
+
         return response()->json([
             'message' => 'Password reset successfully. Please log in.',
         ]);

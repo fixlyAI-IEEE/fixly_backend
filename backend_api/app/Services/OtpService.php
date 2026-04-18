@@ -27,7 +27,6 @@ class OtpService
             ]
         );
 
-        // TODO: pass $otp to your SMS provider here (Twilio, Vonage, etc.)
         // SmsService::send($phone, "Your Fixly OTP is: {$otp}");
 
         return $otp;
@@ -70,16 +69,16 @@ class OtpService
      *
      * @throws ValidationException
      */
-    public function consume(string $phone, string $otp): void
-    {
-        $record = PasswordResetOtp::where('phone', $phone)->first();
+public function consume(string $phone): void
+{
+    $record = PasswordResetOtp::where('phone', $phone)->first();
 
-        if (! $record || ! $record->is_verified || $record->otp !== $otp || $record->isExpired()) {
-            throw ValidationException::withMessages([
-                'otp' => ['Invalid or expired OTP. Please restart the process.'],
-            ]);
-        }
-
-        $record->delete();
+    if (! $record || ! $record->is_verified || $record->isExpired()) {
+        throw ValidationException::withMessages([
+            'otp' => ['Invalid or expired OTP. Please restart the process.'],
+        ]);
     }
+
+    $record->delete();
+}
 }
