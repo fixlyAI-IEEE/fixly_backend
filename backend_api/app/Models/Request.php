@@ -16,6 +16,8 @@ class Request extends Model
         'job_type_id',
         'status',
         'description',
+        'city',
+        'status',
     ];
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -32,4 +34,16 @@ class Request extends Model
     {
         return $this->belongsTo(JobType::class);
     }
+     public function workers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Worker::class, 'request_workers')
+                    ->withPivot('status')
+                    ->withTimestamps();
+    }
+ 
+    // ── Helpers ────────────────────────────────────────────────────
+ 
+    public function isAccepted(): bool { return $this->status === 'accepted'; }
+    public function isRejected(): bool { return $this->status === 'rejected'; }
+    public function isPending(): bool  { return $this->status === null; }
 }
