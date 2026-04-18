@@ -11,6 +11,10 @@ class WorkerResource extends JsonResource
     {
         return [
             'id'           => $this->id,
+            'name'         => $this->whenLoaded('user', fn () => $this->user->name),
+            'phone'        => $this->whenLoaded('user', fn () => $this->user->phone),
+            'city'         => $this->whenLoaded('user', fn () => $this->user->city),
+            'areas'        => $this->whenLoaded('user', fn () => $this->user->areas),
             'is_available' => $this->is_available,
             'is_verified'  => $this->is_verified,
             'rating'       => $this->rating,

@@ -11,10 +11,11 @@ return new class extends Migration
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('worker_id')->constrained('workers')->cascadeOnDelete();
+            $table->foreignId('accepted_worker_id')->constrained('workers')->cascadeOnDelete();
             $table->foreignId('job_type_id')->constrained('job_types');
-            $table->enum('status', ['pending', 'accepted', 'rejected', 'completed'])->default('pending');
             $table->text('description')->nullable();
+            $table->string('city')->nullable();
+            $table->enum('status', ['accepted', 'rejected'])->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

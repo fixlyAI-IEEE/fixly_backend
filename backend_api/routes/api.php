@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\UserAuthController;
 use App\Http\Controllers\Api\Auth\WorkerAuthController;
+use App\Http\Controllers\Api\WorkerController;
+use App\Http\Controllers\Api\ServiceRequestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,22 +32,35 @@ Route::prefix('auth/password')->group(function () {
     Route::post('reset',      [PasswordResetController::class, 'resetPassword']);
 });
 
+// ── Workers listing — public (anyone can browse workers) ───────────────
+Route::get('workers',      [WorkerController::class, 'index']);
+Route::get('workers/{id}', [WorkerController::class, 'show']);
+
 /*
 |--------------------------------------------------------------------------
-| Auth — Protected routes (Sanctum token required)
+| Protected routes (Sanctum token required)
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    // ── Auth ───────────────────────────────────────────────────────
     Route::post('auth/logout', [UserAuthController::class, 'logout']);
     Route::get('auth/me',      [UserAuthController::class, 'me']);
 
-    /*
-    |----------------------------------------------------------------------
-    | Future modules go here — example:
-    |----------------------------------------------------------------------
-    | Route::apiResource('requests', RequestController::class);
-    | Route::apiResource('ratings',  RatingController::class);
-    */
+    // ── User — service requests ────────────────────────────────────
+    Route::prefix('requests')->group(function () {
+        Route::get('/',            [ServiceRequestController::class, 'index']);   // list own requests
+        Route::post('/',           [ServiceRequestController::class, 'store']);   // create & broadcast
+        Route::get('/{id}',        [ServiceRequestController::class, 'show']);    // view single request
+        Route::patch('/{id}/cancel', [ServiceRequestController::class, 'cancel']); // cancel request
+    });
+
+    // ── Worker — inbox & respond ───────────────────────────────────
+    Route::prefix('worker/requests')->group(function () {
+        Route::get('/',              [ServiceRequestController::class, 'workerInbox']); // view broadcast requests
+        Route::patch('/{id}/accept', [ServiceRequestController::class, 'accept']);      // accept a request
+        Route::patch('/{id}/reject', [ServiceRequestController::class, 'reject']);      // reject a request
+    });
+
 });
