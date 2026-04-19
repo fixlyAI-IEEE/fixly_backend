@@ -63,6 +63,8 @@ class WorkerResource extends Resource
                     'friday'    => 'Friday',
                 ])
                 ->columns(3),
+            TextInput::make('avg_price')
+                ->numeric()->minValue(0),
         ]);
     }
 
@@ -78,6 +80,7 @@ class WorkerResource extends Resource
                 IconColumn::make('is_verified')->boolean()->label('Verified'),
                 TextColumn::make('rating')->sortable(),
                 TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('avg_price')->label('Price')
             ])
             ->filters([
                 SelectFilter::make('job_type_id')

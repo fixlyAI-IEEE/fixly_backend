@@ -18,7 +18,8 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-
+use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\ImageColumn;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -56,8 +57,14 @@ class UserResource extends Resource
                 ])
                 ->required(),
             TextInput::make('city')->nullable(),
+            TextInput::make('phone_verified_at')->nullable(),
             TextInput::make('areas')->nullable(),
+            FileUpload::make('profile_picture')
+                ->image()
+                ->directory('users')
+                ->nullable()
         ]);
+        
     }
 
     public static function table(Table $table): Table
@@ -66,6 +73,8 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('name')->searchable()->sortable(),
+                ImageColumn::make('profile_picture')
+                   ->circular(),
                 TextColumn::make('phone')->searchable(),
                 TextColumn::make('role')
                     ->badge()
@@ -76,6 +85,8 @@ class UserResource extends Resource
                         default  => 'gray',
                     }),
                 TextColumn::make('city')->searchable(),
+                TextColumn::make('areas')->searchable(),
+                TextColumn::make('phone_verified_at')->searchable(),
                 TextColumn::make('created_at')->dateTime()->sortable(),
                 TextColumn::make('deleted_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])

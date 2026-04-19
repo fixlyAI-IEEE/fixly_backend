@@ -23,6 +23,8 @@ class User extends Authenticatable
         'role',
         'city',
         'areas',
+        'profile_picture',
+        'phone_verified_at',
     ];
 
     protected $hidden = [
