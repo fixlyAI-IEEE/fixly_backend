@@ -50,19 +50,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('auth/logout', [UserAuthController::class, 'logout']);
     Route::get('auth/me',      [UserAuthController::class, 'me']);
 
-    // ── User — service requests ────────────────────────────────────
-    Route::prefix('requests')->group(function () {
-        Route::get('/',            [ServiceRequestController::class, 'index']);   // list own requests
-        Route::post('/',           [ServiceRequestController::class, 'store']);   // create & broadcast
-        Route::get('/{id}',        [ServiceRequestController::class, 'show']);    // view single request
-        Route::patch('/{id}/cancel', [ServiceRequestController::class, 'cancel']); // cancel request
-    });
+   Route::get('/requests', [ServiceRequestController::class, 'index']);
+    Route::post('/requests', [ServiceRequestController::class, 'store']);
+    Route::get('/requests/{id}', [ServiceRequestController::class, 'show']);
+    Route::get('/requests/{id}/offers', [ServiceRequestController::class, 'offers']);
+    Route::patch('/requests/{id}/confirm', [ServiceRequestController::class, 'confirm']);
+    Route::patch('/requests/{id}/cancel', [ServiceRequestController::class, 'cancel']);
+    Route::post('/requests/{id}/rate', [ServiceRequestController::class, 'rate']);
 
-    // ── Worker — inbox & respond ───────────────────────────────────
-    Route::prefix('worker/requests')->group(function () {
-        Route::get('/',              [ServiceRequestController::class, 'workerInbox']); // view broadcast requests
-        Route::patch('/{id}/accept', [ServiceRequestController::class, 'accept']);      // accept a request
-        Route::patch('/{id}/reject', [ServiceRequestController::class, 'reject']);      // reject a request
+    // ── Worker  ───────────────────────────────────
+    Route::prefix('worker')->group(function () {
+        Route::get('/requests', [ServiceRequestController::class, 'workerInbox']);
+        Route::patch('/requests/{id}/offer', [ServiceRequestController::class, 'workerOffer']);
+        Route::patch('/requests/{id}/reject', [ServiceRequestController::class, 'workerReject']);
     });
 
 });
