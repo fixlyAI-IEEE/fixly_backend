@@ -12,38 +12,56 @@ class Request extends Model
 
     protected $fillable = [
         'user_id',
-        'worker_id',
         'job_type_id',
+        'accepted_worker_id',
         'status',
         'description',
         'city',
-        'status',
     ];
+
+    // ── Relations ──────────────────────────────────────────────────
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function worker(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Worker::class);
-    }
-
     public function jobType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(JobType::class);
     }
-     public function workers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+
+    public function acceptedWorker(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Worker::class, 'accepted_worker_id');
+    }
+
+    // All workers this request was broadcast to
+    public function workers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Worker::class, 'request_workers')
-                    ->withPivot('status')
-                    ->withTimestamps();
+            ->withPivot('status')
+            ->withTimestamps();
     }
- 
-    // ── Helpers ────────────────────────────────────────────────────
- 
-    public function isAccepted(): bool { return $this->status === 'accepted'; }
-    public function isRejected(): bool { return $this->status === 'rejected'; }
-    public function isPending(): bool  { return $this->status === null; }
+
+    // Only workers who sent an offer (pivot status = offered)
+    public function offeredWorkers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Worker::class, 'request_workers')
+            ->withPivot('status')
+            ->wherePivot('status', 'offered')
+            ->withTimestamps();
+    }
+
+    public function ratings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Rating::class);
+    }
+
+    // ── Status helpers ─────────────────────────────────────────────
+
+    public function isPending(): bool   { return $this->status === null; }
+    public function isAccepted(): bool  { return $this->status === 'accepted'; }
+    public function isRejected(): bool  { return $this->status === 'rejected'; }
+    public function isCompleted(): bool { return $this->status === 'completed'; }
 }

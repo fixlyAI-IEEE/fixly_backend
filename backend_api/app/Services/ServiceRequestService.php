@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Rating;
 use App\Models\Request as ServiceRequest;
 use App\Models\Worker;
 use Illuminate\Support\Facades\DB;
@@ -12,29 +13,21 @@ class ServiceRequestService
 {
     private const COOLDOWN_MINUTES = 30;
 
-    /**
-     * Create a request and broadcast it to all available+verified workers
-     * of the requested job type (optionally filtered by city).
-     *
-     * @throws ValidationException
-     */
+    // ── USER: Create request & broadcast to workers ────────────────
+
     public function store(int $userId, array $data): ServiceRequest
     {
-        // ── Guard 1: no active (pending) request allowed ───────────
         $activeRequest = ServiceRequest::where('user_id', $userId)
             ->whereNull('status')
             ->first();
 
         if ($activeRequest) {
             throw ValidationException::withMessages([
-                'request' => ['You already have an active request. Please wait for it to finish or cancel it first.'],
+                'request' => ['You already have an active request. Please wait for it to finish or cancel it.'],
             ]);
         }
 
-        // ── Guard 2: 30-minute cooldown after last request ─────────
-        $lastRequest = ServiceRequest::where('user_id', $userId)
-            ->latest()
-            ->first();
+        $lastRequest = ServiceRequest::where('user_id', $userId)->latest()->first();
 
         if ($lastRequest) {
             $waitUntil = $lastRequest->created_at->addMinutes(self::COOLDOWN_MINUTES);
@@ -43,22 +36,18 @@ class ServiceRequestService
                 $minutesLeft = (int) Carbon::now()->diffInMinutes($waitUntil, absolute: false) + 1;
 
                 throw ValidationException::withMessages([
-                    'request' => ["You must wait {$minutesLeft} more minute(s) before sending a new request."],
+                    'request' => ["Please wait {$minutesLeft} more minute(s) before sending a new request."],
                 ]);
             }
         }
 
-        // ── Find eligible workers to broadcast to ──────────────────
         $workers = Worker::query()
             ->where('job_type_id', $data['job_type_id'])
             ->where('is_available', true)
             ->where('is_verified', true)
             ->when(
                 ! empty($data['city']),
-                fn ($q) => $q->whereHas(
-                    'user',
-                    fn ($u) => $u->where('city', 'like', '%' . $data['city'] . '%')
-                )
+                fn ($q) => $q->whereHas('user', fn ($u) => $u->where('city', 'like', '%' . $data['city'] . '%'))
             )
             ->pluck('id');
 
@@ -74,7 +63,7 @@ class ServiceRequestService
                 'job_type_id' => $data['job_type_id'],
                 'description' => $data['description'] ?? null,
                 'city'        => $data['city'] ?? null,
-                'status'      => null,   // null = awaiting response
+                'status'      => null,
             ]);
 
             $pivotData = $workers->mapWithKeys(
@@ -83,22 +72,17 @@ class ServiceRequestService
 
             $request->workers()->attach($pivotData);
 
-            return $request->load(['jobType', 'workers.user']);
+            return $request->load(['jobType']);
         });
     }
 
-    /**
-     * Worker accepts the request.
-     * Sets requests.status = accepted, records accepted_worker_id,
-     * and auto-rejects all other pending pivot rows.
-     *
-     * @throws ValidationException
-     */
-    public function accept(ServiceRequest $request, int $workerId): ServiceRequest
+    // ── WORKER: Send offer to user (worker clicks "accept") ────────
+
+    public function workerOffer(ServiceRequest $request, int $workerId): ServiceRequest
     {
         if (! $request->isPending()) {
             throw ValidationException::withMessages([
-                'request' => ['This request has already been responded to.'],
+                'request' => ['This request is no longer accepting offers.'],
             ]);
         }
 
@@ -113,36 +97,18 @@ class ServiceRequestService
             ]);
         }
 
-        return DB::transaction(function () use ($request, $workerId) {
-            // Accept this worker's pivot row
-            $request->workers()->updateExistingPivot($workerId, ['status' => 'accepted']);
+        $request->workers()->updateExistingPivot($workerId, ['status' => 'offered']);
 
-            // Auto-reject all other pending workers
-            $request->workers()
-                ->wherePivot('status', 'pending')
-                ->each(fn ($w) => $request->workers()->updateExistingPivot($w->id, ['status' => 'rejected']));
-
-            // Lock the request
-            $request->update([
-                'status'             => 'accepted',
-                'accepted_worker_id' => $workerId,
-            ]);
-
-            return $request->fresh(['jobType', 'acceptedWorker.user']);
-        });
+        return $request->fresh(['jobType', 'offeredWorkers.user']);
     }
 
-    /**
-     * Worker rejects the request (their pivot row only).
-     * If all workers have now rejected, sets requests.status = rejected.
-     *
-     * @throws ValidationException
-     */
-    public function reject(ServiceRequest $request, int $workerId): ServiceRequest
+    // ── WORKER: Reject the request (their pivot row only) ──────────
+
+    public function workerReject(ServiceRequest $request, int $workerId): ServiceRequest
     {
         if (! $request->isPending()) {
             throw ValidationException::withMessages([
-                'request' => ['This request has already been responded to.'],
+                'request' => ['This request is no longer active.'],
             ]);
         }
 
@@ -159,29 +125,71 @@ class ServiceRequestService
 
         $request->workers()->updateExistingPivot($workerId, ['status' => 'rejected']);
 
-        // If every worker has now rejected → mark the whole request as rejected
-        $anyStillPending = $request->workers()
-            ->wherePivot('status', 'pending')
+        // If every worker rejected → close the request
+        $anyStillActive = $request->workers()
+            ->wherePivotIn('status', ['pending', 'offered'])
             ->exists();
 
-        if (! $anyStillPending) {
+        if (! $anyStillActive) {
             $request->update(['status' => 'rejected']);
         }
 
         return $request->fresh(['jobType']);
     }
 
-    /**
-     * User cancels their own pending request.
-     * Rejects all pending pivot rows and marks the request as rejected.
-     *
-     * @throws ValidationException
-     */
+    // ── USER: Confirm one worker from those who offered ────────────
+
+    public function confirmWorker(ServiceRequest $request, int $userId, int $workerId): ServiceRequest
+    {
+        if ($request->user_id !== $userId) {
+            throw ValidationException::withMessages([
+                'request' => ['Unauthorised.'],
+            ]);
+        }
+
+        if (! $request->isPending()) {
+            throw ValidationException::withMessages([
+                'request' => ['This request has already been closed.'],
+            ]);
+        }
+
+        // Make sure this worker actually sent an offer
+        $offeredWorker = $request->workers()
+            ->wherePivot('worker_id', $workerId)
+            ->wherePivot('status', 'offered')
+            ->first();
+
+        if (! $offeredWorker) {
+            throw ValidationException::withMessages([
+                'worker_id' => ['This worker has not sent an offer for your request.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($request, $workerId) {
+            // Confirm this worker
+            $request->workers()->updateExistingPivot($workerId, ['status' => 'accepted']);
+
+            // Reject everyone else (pending or offered)
+            $request->workers()
+                ->wherePivotIn('status', ['pending', 'offered'])
+                ->each(fn ($w) => $request->workers()->updateExistingPivot($w->id, ['status' => 'rejected']));
+
+            $request->update([
+                'status'              => 'accepted',
+                'accepted_worker_id'  => $workerId,
+            ]);
+
+            return $request->fresh(['jobType', 'acceptedWorker.user']);
+        });
+    }
+
+    // ── USER: Cancel their own pending request ─────────────────────
+
     public function cancel(ServiceRequest $request, int $userId): ServiceRequest
     {
         if ($request->user_id !== $userId) {
             throw ValidationException::withMessages([
-                'request' => ['You are not authorised to cancel this request.'],
+                'request' => ['Unauthorised.'],
             ]);
         }
 
@@ -192,11 +200,66 @@ class ServiceRequestService
         }
 
         $request->workers()
-            ->wherePivot('status', 'pending')
+            ->wherePivotIn('status', ['pending', 'offered'])
             ->each(fn ($w) => $request->workers()->updateExistingPivot($w->id, ['status' => 'rejected']));
 
         $request->update(['status' => 'rejected']);
 
         return $request->fresh(['jobType']);
+    }
+
+    // ── USER: Mark request as completed & submit rating ───────────
+
+    public function completeAndRate(ServiceRequest $request, int $userId, array $data): Rating
+    {
+        if ($request->user_id !== $userId) {
+            throw ValidationException::withMessages([
+                'request' => ['Unauthorised.'],
+            ]);
+        }
+
+        if (! $request->isAccepted()) {
+            throw ValidationException::withMessages([
+                'request' => ['You can only rate a confirmed request.'],
+            ]);
+        }
+
+        if (! $request->accepted_worker_id) {
+            throw ValidationException::withMessages([
+                'request' => ['No confirmed worker found on this request.'],
+            ]);
+        }
+
+        // Prevent double rating
+        $alreadyRated = Rating::where('user_id', $userId)
+            ->where('request_id', $request->id)
+            ->exists();
+
+        if ($alreadyRated) {
+            throw ValidationException::withMessages([
+                'request' => ['You have already rated this request.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($request, $userId, $data) {
+            // Mark request as completed
+            $request->update(['status' => 'completed']);
+
+            // Save rating
+            $rating = Rating::create([
+                'user_id'    => $userId,
+                'worker_id'  => $request->accepted_worker_id,
+                'request_id' => $request->id,
+                'rate'       => $data['rate'],
+                'comment'    => $data['comment'] ?? null,
+            ]);
+
+            // Recalculate worker's average rating
+            $worker = $request->acceptedWorker;
+            $worker->rating = Rating::where('worker_id', $worker->id)->avg('rate');
+            $worker->save();
+
+            return $rating;
+        });
     }
 }
