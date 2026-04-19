@@ -31,6 +31,8 @@ class RegisterWorkerRequest extends FormRequest
             'areas' => ['nullable', 'string', 'max:255'],
             'working_days' => ['required', 'array'],
             'working_days.*' => ['string'],
+            'profile_picture'  => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'avg_price'        => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

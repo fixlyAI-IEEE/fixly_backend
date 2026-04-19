@@ -26,6 +26,7 @@ class OtpService
                 'created_at'  => now(),
             ]
         );
+\Illuminate\Support\Facades\Log::info("OTP for {$phone}: {$otp}");
 
         // SmsService::send($phone, "Your Fixly OTP is: {$otp}");
 

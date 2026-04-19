@@ -19,12 +19,17 @@ use App\Http\Controllers\Api\ChatController;
 Route::prefix('auth/user')->group(function () {
     Route::post('register', [UserAuthController::class, 'register']);
     Route::post('login',    [UserAuthController::class, 'login']);
+    Route::post('/resend-otp',      [UserAuthController::class, 'resendOtp']);
+
 });
+Route::prefix('auth')->group(function () {
+        Route::post('/verify-phone',    [UserAuthController::class, 'verifyPhone']);
+});
+
 
 // ── Worker auth ────────────────────────────────────────────────────────
 Route::prefix('auth/worker')->group(function () {
     Route::post('register', [WorkerAuthController::class, 'register']);
-    Route::post('login',    [WorkerAuthController::class, 'login']);
 });
 
 // ── Forgot password (OTP flow) ─────────────────────────────────────────
@@ -51,6 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Auth ───────────────────────────────────────────────────────
     Route::post('auth/logout', [UserAuthController::class, 'logout']);
     Route::get('auth/me',      [UserAuthController::class, 'me']);
+    Route::post('/profile-picture', [UserAuthController::class, 'updateProfilePicture']);
 
    Route::get('/requests', [ServiceRequestController::class, 'index']);
     Route::post('/requests', [ServiceRequestController::class, 'store']);

@@ -9,13 +9,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Worker extends Model
 {
     use HasFactory, SoftDeletes;
-
     protected $fillable = [
         'user_id',
         'job_type_id',
         'is_available',
         'is_verified',
         'rating',
+        'avg_price',
         'working_days',
     ];
 
