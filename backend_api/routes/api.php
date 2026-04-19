@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\Auth\WorkerAuthController;
 use App\Http\Controllers\Api\WorkerController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\MessageController;
 /*
 |--------------------------------------------------------------------------
 | Auth — Public routes (no token required)
@@ -36,6 +36,8 @@ Route::prefix('auth/password')->group(function () {
 Route::get('workers',      [WorkerController::class, 'index']);
 Route::get('workers/{id}', [WorkerController::class, 'show']);
 
+//Messages Through Landing Page 
+Route::post('messages', [MessageController::class, 'store']);
 /*
 |--------------------------------------------------------------------------
 | Protected routes (Sanctum token required)
