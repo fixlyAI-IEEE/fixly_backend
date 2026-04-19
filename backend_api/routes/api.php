@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\WorkerController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\ChatController;
+
 /*
 |--------------------------------------------------------------------------
 | Auth — Public routes (no token required)
@@ -64,5 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/requests/{id}/offer', [ServiceRequestController::class, 'workerOffer']);
         Route::patch('/requests/{id}/reject', [ServiceRequestController::class, 'workerReject']);
     });
+    //ChatBot
+    Route::post('/chat',                        [ChatController::class, 'sendMessage']);
+    Route::get('/chat/history',                 [ChatController::class, 'history']);
+    Route::get('/chat/workers/{jobTypeId}',     [ChatController::class, 'workersByJobType']);
 
 });
