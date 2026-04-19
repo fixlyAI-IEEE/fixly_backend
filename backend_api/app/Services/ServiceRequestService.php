@@ -8,10 +8,14 @@ use App\Models\Worker;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
+use App\Services\PaymentService;
+
 
 class ServiceRequestService
 {
     private const COOLDOWN_MINUTES = 30;
+
+    public function __construct(private readonly PaymentService $paymentService) {}
 
     // ── USER: Create request & broadcast to workers ────────────────
 
@@ -80,6 +84,12 @@ class ServiceRequestService
 
     public function workerOffer(ServiceRequest $request, int $workerId): ServiceRequest
     {
+            $worker = Worker::findOrFail($workerId);
+        if ($worker->isBlocked()) {
+                throw ValidationException::withMessages([
+                    'request' => ['Your account is blocked due to pending payment. Please upload your payment proof.'],
+                ]);
+            }
         if (! $request->isPending()) {
             throw ValidationException::withMessages([
                 'request' => ['This request is no longer accepting offers.'],
@@ -242,24 +252,24 @@ class ServiceRequestService
         }
 
         return DB::transaction(function () use ($request, $userId, $data) {
-            // Mark request as completed
-            $request->update(['status' => 'completed']);
+        $request->update(['status' => 'completed']);
 
-            // Save rating
-            $rating = Rating::create([
-                'user_id'    => $userId,
-                'worker_id'  => $request->accepted_worker_id,
-                'request_id' => $request->id,
-                'rate'       => $data['rate'],
-                'comment'    => $data['comment'] ?? null,
-            ]);
+        $rating = Rating::create([
+            'user_id'    => $userId,
+            'worker_id'  => $request->accepted_worker_id,
+            'request_id' => $request->id,
+            'rate'       => $data['rate'],
+            'comment'    => $data['comment'] ?? null,
+        ]);
 
-            // Recalculate worker's average rating
-            $worker = $request->acceptedWorker;
-            $worker->rating = Rating::where('worker_id', $worker->id)->avg('rate');
-            $worker->save();
+        $worker = $request->acceptedWorker;
+        $worker->rating = Rating::where('worker_id', $worker->id)->avg('rate');
+        $worker->save();
 
-            return $rating;
+        // Record completed job + auto-block if cycle complete
+        $this->paymentService->recordCompletedJob($worker);
+
+        return $rating;
         });
     }
 }

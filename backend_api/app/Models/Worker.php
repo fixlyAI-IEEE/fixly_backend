@@ -9,15 +9,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Worker extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $fillable = [
-        'user_id',
-        'job_type_id',
-        'is_available',
-        'is_verified',
-        'rating',
-        'avg_price',
-        'working_days',
-    ];
+  protected $fillable = [
+    'user_id',
+    'job_type_id',
+    'is_available',
+    'is_verified',
+    'rating',
+    'avg_price',
+    'working_days',
+    'completed_jobs_count',
+    'is_payment_pending',
+    'total_amount_due',
+    'total_amount_paid',
+];
 
     protected function casts(): array
     {
@@ -50,4 +54,18 @@ class Worker extends Model
     {
         return $this->hasMany(Rating::class);
     }
+    public function paymentCycles(): \Illuminate\Database\Eloquent\Relations\HasMany
+{
+    return $this->hasMany(PaymentCycle::class);
+}
+
+public function currentPaymentCycle(): \Illuminate\Database\Eloquent\Relations\HasOne
+{
+    return $this->hasOne(PaymentCycle::class)->latestOfMany();
+}
+
+public function isBlocked(): bool
+{
+    return $this->is_payment_pending;
+}
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ServiceRequestController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -76,5 +77,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat',                        [ChatController::class, 'sendMessage']);
     Route::get('/chat/history',                 [ChatController::class, 'history']);
     Route::get('/chat/workers/{jobTypeId}',     [ChatController::class, 'workersByJobType']);
-
+   
+});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('worker')->group(function () {
+        Route::get('/payment-cycles',   [PaymentController::class, 'index']);
+        Route::post('/payment-proof',   [PaymentController::class, 'uploadProof']);
+    });
 });
