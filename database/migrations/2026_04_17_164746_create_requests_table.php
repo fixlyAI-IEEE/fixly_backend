@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('job_type_id')->constrained('job_types');
             $table->text('description')->nullable();
             $table->string('city')->nullable();
-            $table->enum('status', ['accepted', 'rejected'])->nullable();
+           $table->string('status')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
