@@ -31,16 +31,15 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverResources(in: app_path('Filament/Resources/Chats'), for: 'App\Filament\Resources\Chats')
-            ->discoverResources(in: app_path('Filament/Resources/JobTypes'), for: 'App\Filament\Resources\JobTypes')
-            ->discoverResources(in: app_path('Filament/Resources/Messages'), for: 'App\Filament\Resources\Messages')
-            ->discoverResources(in: app_path('Filament/Resources/PaymentCycles'), for: 'App\Filament\Resources\PaymentCycles')
-            ->discoverResources(in: app_path('Filament/Resources/Ratings'), for: 'App\Filament\Resources\Ratings')
-            ->discoverResources(in: app_path('Filament/Resources/ServiceRequests'), for: 'App\Filament\Resources\ServiceRequests')
-            ->discoverResources(in: app_path('Filament/Resources/Users'), for: 'App\Filament\Resources\Users')
-            ->discoverResources(in: app_path('Filament/Resources/Worker'), for: 'App\Filament\Resources\Worker')
+->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+->discoverResources(in: app_path('Filament/Resources/Chats'), for: 'App\Filament\Resources\Chats')
+->discoverResources(in: app_path('Filament/Resources/JobTypes'), for: 'App\Filament\Resources\JobTypes')
+->discoverResources(in: app_path('Filament/Resources/Messages'), for: 'App\Filament\Resources\Messages')
+->discoverResources(in: app_path('Filament/Resources/PaymentCycles'), for: 'App\Filament\Resources\PaymentCycles')
+->discoverResources(in: app_path('Filament/Resources/Ratings'), for: 'App\Filament\Resources\Ratings')
+->discoverResources(in: app_path('Filament/Resources/ServiceRequests'), for: 'App\Filament\Resources\ServiceRequests')
+->discoverResources(in: app_path('Filament/Resources/Users'), for: 'App\Filament\Resources\Users')
+->discoverResources(in: app_path('Filament/Resources/Worker'), for: 'App\Filament\Resources\Worker')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
