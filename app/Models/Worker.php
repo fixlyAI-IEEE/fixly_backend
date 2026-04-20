@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\JobType;
+use App\Models\User;
+use App\Models\Rating;
+use App\Models\PaymentCycle;
 
 class Worker extends Model
 {

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Worker;
+use App\Models\Request;
 
 class JobType extends Model
 {
