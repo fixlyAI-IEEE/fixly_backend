@@ -2,22 +2,18 @@
 namespace App\Services;
 
 use Twilio\Rest\Client;
+use Illuminate\Support\Facades\Log;
 
 class SmsService
 {
     public function send($phone, $message)
     {
-        $client = new Client(
-            env('TWILIO_SID'),
-            env('TWILIO_TOKEN')
-        );
+           Log::info('SMS (dev only)', [
+            'to'      => $phone,
+            'message' => $message,
+        ]);
 
-        return $client->messages->create(
-            $phone,
-            [
-                'from' => env('TWILIO_FROM'),
-                'body' => $message
-            ]
-        );
+        return true;
+
     }
 }

@@ -15,7 +15,7 @@ class PasswordResetController extends Controller
 {
     public function __construct(private readonly OtpService $otpService) {}
 
-  public function sendOtp(SendOtpRequest $request): JsonResponse
+public function sendOtp(SendOtpRequest $request): JsonResponse
 {
     $otp = $this->otpService->generate($request->phone);
 
@@ -26,6 +26,7 @@ class PasswordResetController extends Controller
 
     return response()->json([
         'message' => 'OTP sent successfully.',
+        'otp'     => $otp, 
     ]);
 }
 
