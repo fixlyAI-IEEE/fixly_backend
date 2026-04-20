@@ -8,6 +8,7 @@ use App\Models\Request;
 
 class JobType extends Model
 {
+     protected $table = 'job_types';
     protected $fillable = ['name'];
 
     public function workers(): \Illuminate\Database\Eloquent\Relations\HasMany
