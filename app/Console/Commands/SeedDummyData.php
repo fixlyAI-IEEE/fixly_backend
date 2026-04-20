@@ -101,7 +101,7 @@ class SeedDummyData extends Command
                 'password'   => Hash::make('password'),
                 'role'       => 'user',
                 'city'       => $this->cities[$cityIndex],
-                'areas'      => implode(',', (array) fake()->randomElements($areas, rand(1, count($areas)))),
+                // 'areas'      => implode(',', (array) fake()->randomElements($areas, rand(1, count($areas)))),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -139,7 +139,7 @@ class SeedDummyData extends Command
                 'password'   => Hash::make('password'),
                 'role'       => 'worker',
                 'city'       => $this->cities[$cityIndex],
-                'areas'      => implode(',', (array) fake()->randomElements($areas, rand(1, count($areas)))),
+                'areas' => implode(',', $this->randomElements($areas, rand(1, count($areas)))),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -189,4 +189,10 @@ class SeedDummyData extends Command
         $prefixes = ['010', '011', '012', '015'];
         return $prefixes[array_rand($prefixes)] . rand(10000000, 99999999);
     }
+    private function randomElements(array $array, int $count): array
+{
+    $count = min($count, count($array));
+    $keys  = array_rand($array, $count);
+    return array_map(fn ($k) => $array[$k], (array) $keys);
+}
 }
