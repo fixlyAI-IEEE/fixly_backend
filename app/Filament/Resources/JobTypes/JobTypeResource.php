@@ -2,8 +2,7 @@
 
 namespace App\Filament\Resources\JobTypes;
 
-use App\Filament\Resources\JobTypes\JobTypeResource\Pages;
-use App\Models\JobType;
+use App\Filament\Resources\JobTypes\Pages;use App\Models\JobType;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;

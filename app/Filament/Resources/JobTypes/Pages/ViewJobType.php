@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\JobTypes\JobTypeResource\Pages;
+namespace App\Filament\Resources\JobTypes\Pages;
 
 use App\Filament\Resources\JobTypes\JobTypeResource;
 use Filament\Actions\EditAction;
